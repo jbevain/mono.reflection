@@ -156,16 +156,10 @@ namespace Mono.Reflection {
 				instruction.Operand = module.ResolveString (il.ReadInt32 ());
 				break;
 			case OperandType.InlineTok:
-				instruction.Operand = module.ResolveMember (il.ReadInt32 (), type_arguments, method_arguments);
-				break;
 			case OperandType.InlineType:
-				instruction.Operand = module.ResolveType (il.ReadInt32 (), type_arguments, method_arguments);
-				break;
 			case OperandType.InlineMethod:
-				instruction.Operand = module.ResolveMethod (il.ReadInt32 (), type_arguments, method_arguments);
-				break;
 			case OperandType.InlineField:
-				instruction.Operand = module.ResolveField (il.ReadInt32 (), type_arguments, method_arguments);
+				instruction.Operand = module.ResolveMember (il.ReadInt32 (), type_arguments, method_arguments);
 				break;
 			case OperandType.ShortInlineVar:
 				instruction.Operand = GetVariable (instruction, il.ReadByte ());
