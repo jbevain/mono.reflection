@@ -36,7 +36,7 @@ using NUnit.Framework;
 namespace Mono.Reflection {
 
 	[TestFixture]
-	public class DisassemblerTest {
+	public class DisassemblerTest : BaseReflectionTest {
 
 		[Test]
 		public void DefaultConstructor ()
@@ -134,32 +134,6 @@ namespace Mono.Reflection {
 		static string Normalize (string str)
 		{
 			return str.Trim ().Replace ("\r\n", "\n");
-		}
-
-		static MethodBase GetMethod (string name)
-		{
-			return test_target.GetType ("Test").GetMember (name,
-				BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance) [0] as MethodBase;
-		}
-
-		static Assembly test_target = LoadTestTarget ();
-
-		static Assembly LoadTestTarget ()
-		{
-			var stream = Assembly.GetExecutingAssembly ().GetManifestResourceStream ("target.dll");
-			return Assembly.Load (ToArray (stream));
-		}
-
-		static byte [] ToArray (Stream stream)
-		{
-			var buffer = new byte [16 * 1024];
-			using (MemoryStream ms = new MemoryStream ()) {
-				int read;
-				while ((read = stream.Read (buffer, 0, buffer.Length)) > 0)
-					ms.Write (buffer, 0, read);
-
-				return ms.ToArray ();
-			}
 		}
 	}
 }
