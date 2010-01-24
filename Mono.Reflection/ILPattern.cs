@@ -28,6 +28,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -38,6 +39,11 @@ namespace Mono.Reflection {
 		public static ILPattern Optional (OpCode opcode)
 		{
 			return Optional (OpCode (opcode));
+		}
+
+		public static ILPattern Optional (params OpCode [] opcodes)
+		{
+			return Optional (Sequence (opcodes.Select (opcode => OpCode (opcode)).ToArray ()));
 		}
 
 		public static ILPattern Optional (ILPattern pattern)
@@ -144,7 +150,7 @@ namespace Mono.Reflection {
 			return context.instruction.Previous;
 		}
 
-		internal bool TryMatch (MatchContext context)
+		public bool TryMatch (MatchContext context)
 		{
 			var instruction = context.instruction;
 			Match (context);
@@ -177,6 +183,7 @@ namespace Mono.Reflection {
 
 		public bool IsMatch {
 			get { return success; }
+			set { success = true; }
 		}
 
 		public MatchContext (Instruction instruction)
