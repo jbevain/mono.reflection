@@ -41,6 +41,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Mono.Reflection\AssemblyInfo.cs" />
+    <Compile Include="Mono.Reflection\BackingFieldResolverTest.cs" />
+    <Compile Include="Mono.Reflection\BaseReflectionTest.cs" />
     <Compile Include="Mono.Reflection\DisassemblerTest.cs" />
     <Compile Include="Mono.Reflection\Formatter.cs" />
   </ItemGroup>
@@ -56,7 +58,7 @@
   <ItemGroup>
     <EmbeddedResource Include="target.dll">
       <LogicalName>target.dll</LogicalName>
-	</EmbeddedResource>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

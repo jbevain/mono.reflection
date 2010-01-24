@@ -43,7 +43,9 @@
   <ItemGroup>
     <Compile Include="Mono.Reflection\AssemblyInfo.cs" />
     <Compile Include="Mono.Reflection\ByteBuffer.cs" />
+    <Compile Include="Mono.Reflection\BackingFieldResolver.cs" />
     <Compile Include="Mono.Reflection\Disassembler.cs" />
+    <Compile Include="Mono.Reflection\ILPattern.cs" />
     <Compile Include="Mono.Reflection\MethodBodyReader.cs" />
     <Compile Include="Mono.Reflection\Instruction.cs" />
   </ItemGroup>

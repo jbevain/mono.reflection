@@ -91,4 +91,110 @@
 		ldc.i4.m1
 		ret
 	}
+	
+	// optimized instance property
+
+	.field private bool opan
+
+	.property instance bool OPan () {
+		.get instance bool Test::get_OPan ()
+		.set instance void Test::set_OPan (bool)
+	}
+
+	.method public hidebysig specialname instance bool get_OPan () cil managed
+	{
+		ldarg.0
+		ldfld		bool Test::opan
+		ret
+	}
+
+	.method public hidebysig specialname instance void set_OPan (bool val) cil managed
+	{
+		ldarg.0
+		ldarg.1
+		stfld		bool Test::opan
+		ret
+	}
+
+	// optimized static property
+
+	.field private static bool sopan
+
+	.property bool SOPan () {
+		.get bool Test::get_SOPan ()
+		.set void Test::set_SOPan (bool)
+	}
+
+	.method public hidebysig specialname static bool get_SOPan () cil managed
+	{
+		ldsfld		bool Test::sopan
+		ret
+	}
+
+	.method public hidebysig specialname static void set_SOPan (bool val) cil managed
+	{
+		ldarg.0
+		stsfld		bool Test::sopan
+		ret
+	}
+
+	// unoptimized instance property
+
+	.field private bool upan
+
+	.property instance bool UPan () {
+		.get instance bool Test::get_UPan ()
+		.set instance void Test::set_UPan (bool)
+	}
+
+	.method public hidebysig specialname instance bool get_UPan () cil managed
+	{
+		.locals init (bool b)
+		nop
+		ldarg.0
+		ldfld		bool Test::upan
+		stloc.0
+		br.s		retval
+	retval:
+		ldloc.0
+		ret
+	}
+
+	.method public hidebysig specialname instance void set_UPan (bool val) cil managed
+	 {
+		nop
+		ldarg.0
+		ldarg.1
+		stfld		bool Test::upan
+		ret
+	}
+
+	// unoptimized static property
+
+	.field private static bool supan
+
+	.property bool SUPan () {
+		.get bool Test::get_SUPan ()
+		.set void Test::set_SUPan (bool)
+	}
+
+	.method public hidebysig specialname static bool get_SUPan () cil managed
+	{
+		.locals init (bool val)
+		nop
+		ldsfld		bool Test::supan
+		stloc.0
+		br.s		retval
+	retval:
+		ldloc.0
+		ret
+	}
+
+	.method public hidebysig specialname static void set_SUPan (bool val) cil managed
+	{
+		nop
+		ldarg.0
+		stsfld		bool Test::supan
+		ret
+	}
 }
