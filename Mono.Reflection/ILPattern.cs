@@ -54,7 +54,7 @@ namespace Mono.Reflection {
 				this.pattern = optional;
 			}
 
-			internal override void Match (MatchContext context)
+			public override void Match (MatchContext context)
 			{
 				pattern.TryMatch (context);
 			}
@@ -74,7 +74,7 @@ namespace Mono.Reflection {
 				this.patterns = patterns;
 			}
 
-			internal override void Match (MatchContext context)
+			public override void Match (MatchContext context)
 			{
 				foreach (var pattern in patterns) {
 					pattern.Match (context);
@@ -99,7 +99,7 @@ namespace Mono.Reflection {
 				this.opcode = opcode;
 			}
 
-			internal override void Match (MatchContext context)
+			public override void Match (MatchContext context)
 			{
 				if (context.instruction == null) {
 					context.success = false;
@@ -127,14 +127,14 @@ namespace Mono.Reflection {
 				this.b = b;
 			}
 
-			internal override void Match (MatchContext context)
+			public override void Match (MatchContext context)
 			{
 				if (!a.TryMatch (context))
 					b.Match (context);
 			}
 		}
 
-		internal abstract void Match (MatchContext context);
+		public abstract void Match (MatchContext context);
 
 		protected static Instruction GetLastMatchingInstruction (MatchContext context)
 		{

@@ -43,7 +43,7 @@ namespace Mono.Reflection {
 				this.pattern = pattern;
 			}
 
-			internal override void Match (MatchContext context)
+			public override void Match (MatchContext context)
 			{
 				if (!pattern.TryMatch (context)) {
 					context.success = false;
