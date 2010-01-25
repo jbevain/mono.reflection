@@ -36,6 +36,8 @@ namespace Mono.Reflection {
 
 		class FieldPattern : ILPattern {
 
+			public static object FieldKey = new object ();
+
 			ILPattern pattern;
 
 			public FieldPattern (ILPattern pattern)
@@ -45,14 +47,13 @@ namespace Mono.Reflection {
 
 			public override void Match (MatchContext context)
 			{
-				if (!pattern.TryMatch (context)) {
-					context.success = false;
+				pattern.Match (context);
+				if (!context.success)
 					return;
-				}
 
 				var match = GetLastMatchingInstruction (context);
 				var field = (FieldInfo) match.Operand;
-				context.AddData (field_key, field);
+				context.AddData (FieldKey, field);
 			}
 		}
 
@@ -60,8 +61,6 @@ namespace Mono.Reflection {
 		{
 			return new FieldPattern (ILPattern.OpCode (opcode));
 		}
-
-		static object field_key = new object ();
 
 		static ILPattern GetterPattern =
 			ILPattern.Sequence (
@@ -96,7 +95,7 @@ namespace Mono.Reflection {
 				throw new InvalidOperationException ();
 
 			object value;
-			if (!result.TryGetData (field_key, out value))
+			if (!result.TryGetData (FieldPattern.FieldKey, out value))
 				throw new InvalidOperationException ();
 
 			return (FieldInfo) value;
