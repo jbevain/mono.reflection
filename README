@@ -1,0 +1,25 @@
+Mono.Reflection
+--
+
+Mono.Reflection is an helper library to complement the System.Reflection
+and System.Reflection.Emit namespaces.
+
+API
+--
+
+	bool Image.IsAssembly (string)
+	bool Image.IsAssembly (Stream)
+
+		Test whether a file is a managed assembly or not.
+
+	FieldInfo BackingFieldResolver.GetBackingField (this PropertyInfo)
+
+		Returns the field backing a property or throws an
+		InvalidOperationException.
+
+	IList<Instruction> Disassembler.GetInstructions (this MethodBase)
+
+		Disassemble a list of IL instructions from the method body
+		or throws an ArgumentException if the method doesn't provide
+		a body.
+	
