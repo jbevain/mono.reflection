@@ -46,6 +46,7 @@
     <Compile Include="Mono.Reflection\BackingFieldResolver.cs" />
     <Compile Include="Mono.Reflection\Disassembler.cs" />
     <Compile Include="Mono.Reflection\ILPattern.cs" />
+    <Compile Include="Mono.Reflection\Image.cs" />
     <Compile Include="Mono.Reflection\MethodBodyReader.cs" />
     <Compile Include="Mono.Reflection\Instruction.cs" />
   </ItemGroup>

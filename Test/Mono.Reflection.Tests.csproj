@@ -43,6 +43,7 @@
     <Compile Include="Mono.Reflection\AssemblyInfo.cs" />
     <Compile Include="Mono.Reflection\BackingFieldResolverTest.cs" />
     <Compile Include="Mono.Reflection\BaseReflectionTest.cs" />
+    <Compile Include="Mono.Reflection\ImageTest.cs" />
     <Compile Include="Mono.Reflection\DisassemblerTest.cs" />
     <Compile Include="Mono.Reflection\Formatter.cs" />
   </ItemGroup>
