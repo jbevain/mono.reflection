@@ -31,7 +31,7 @@ using System.IO;
 
 namespace Mono.Reflection {
 
-	public class Image : IDisposable {
+	public sealed class Image : IDisposable {
 
 		long position;
 		Stream stream;
@@ -102,14 +102,25 @@ namespace Mono.Reflection {
 
 		public static bool IsAssembly (string file)
 		{
+			if (file == null)
+				throw new ArgumentNullException ("file");
+
 			using (var stream = new FileStream (file, FileMode.Open, FileAccess.Read, FileShare.Read))
 				return IsAssembly (stream);
 		}
 
 		public static bool IsAssembly (Stream stream)
 		{
+			if (stream == null)
+				throw new ArgumentNullException ("stream");
+			if (!stream.CanRead)
+				throw new ArgumentException ("Can not read from stream");
+			if (!stream.CanSeek)
+				throw new ArgumentException ("Can not seek in stream");
+
 			using (var image = new Image (stream))
 				return image.IsManagedAssembly ();
 		}
 	}
 }
+	

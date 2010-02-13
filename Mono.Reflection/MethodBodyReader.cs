@@ -74,11 +74,11 @@ namespace Mono.Reflection {
 
 			this.body = method.GetMethodBody ();
 			if (this.body == null)
-				throw new ArgumentException ();
+				throw new ArgumentException ("Method has no body");
 
 			var bytes = body.GetILAsByteArray ();
 			if (bytes == null)
-				throw new ArgumentException ();
+				throw new ArgumentException ("Can not get the body of the method");
 
 			if (!(method is ConstructorInfo))
 				method_arguments = method.GetGenericArguments ();

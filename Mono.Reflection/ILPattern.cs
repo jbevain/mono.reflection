@@ -164,6 +164,11 @@ namespace Mono.Reflection {
 
 		public static MatchContext Match (MethodBase method, ILPattern pattern)
 		{
+			if (method == null)
+				throw new ArgumentNullException ("method");
+			if (pattern == null)
+				throw new ArgumentNullException ("pattern");
+
 			var instructions = method.GetInstructions ();
 			if (instructions.Count == 0)
 				throw new ArgumentException ();
@@ -174,7 +179,7 @@ namespace Mono.Reflection {
 		}
 	}
 
-	public class MatchContext {
+	public sealed class MatchContext {
 
 		internal Instruction instruction;
 		internal bool success;
@@ -186,7 +191,7 @@ namespace Mono.Reflection {
 			set { success = true; }
 		}
 
-		public MatchContext (Instruction instruction)
+		internal MatchContext (Instruction instruction)
 		{
 			Reset (instruction);
 		}
