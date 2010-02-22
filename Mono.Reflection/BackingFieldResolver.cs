@@ -1,4 +1,4 @@
-﻿//
+//
 // BackingFieldResolver.cs
 //
 // Author:

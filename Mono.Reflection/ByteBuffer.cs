@@ -1,4 +1,4 @@
-﻿//
+//
 // ByteBuffer.cs
 //
 // Author:

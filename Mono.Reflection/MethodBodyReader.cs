@@ -1,4 +1,4 @@
-﻿//
+//
 // MethodBodyReader.cs
 //
 // Author:
@@ -176,7 +176,7 @@ namespace Mono.Reflection {
 		{
 			if (TargetsLocalVariable (instruction.OpCode))
 				return GetLocalVariable (index);
-			
+
 			return GetParameter (index);
 		}
 

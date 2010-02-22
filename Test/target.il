@@ -72,7 +72,7 @@
 	.method public instance int32 Switch (int32 i) cil managed
 	{
 		ldarg.1
-		switch (zero, one, two, other) 
+		switch (zero, one, two, other)
 		br.s		other
 
 	zero:
@@ -91,7 +91,7 @@
 		ldc.i4.m1
 		ret
 	}
-	
+
 	// optimized instance property
 
 	.field private bool opan

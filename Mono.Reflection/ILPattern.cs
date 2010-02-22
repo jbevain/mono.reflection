@@ -1,4 +1,4 @@
-﻿//
+//
 // ILPattern.cs
 //
 // Author:
