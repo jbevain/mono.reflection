@@ -2,7 +2,8 @@ Mono.Reflection
 --
 
 Mono.Reflection is an helper library to complement the System.Reflection
-and System.Reflection.Emit namespaces.
+and System.Reflection.Emit namespaces. It is known to work on both
+Mono 2.4 and .net 3.5.
 
 API
 --
