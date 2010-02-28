@@ -49,7 +49,6 @@
     <Compile Include="Mono.Reflection\Image.cs" />
     <Compile Include="Mono.Reflection\MethodBodyReader.cs" />
     <Compile Include="Mono.Reflection\Instruction.cs" />
-    <Compile Include="Mono.Reflection\TypeRocks.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="mono.snk" />
