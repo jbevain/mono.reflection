@@ -92,7 +92,7 @@ namespace Mono.Reflection {
 		{
 			var result = ILPattern.Match (method, pattern);
 			if (!result.success)
-				throw new InvalidOperationException ();
+				throw new ArgumentException ();
 
 			object value;
 			if (!result.TryGetData (FieldPattern.FieldKey, out value))
