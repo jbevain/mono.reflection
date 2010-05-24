@@ -126,7 +126,7 @@ namespace Mono.Reflection {
 				instruction.Operand = branches;
 				break;
 			case OperandType.ShortInlineBrTarget:
-				instruction.Operand = (sbyte) (il.ReadByte () + il.position);
+				instruction.Operand = (sbyte) (((sbyte) il.ReadByte ()) + il.position);
 				break;
 			case OperandType.InlineBrTarget:
 				instruction.Operand = il.ReadInt32 () + il.position;
