@@ -1,6 +1,5 @@
-
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mono.Reflection", "Mono.Reflection.csproj", "{97B010AB-0756-46DC-B75A-7A6C4F6FF28D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mono.Reflection.Tests", "Test\Mono.Reflection.Tests.csproj", "{51FCE249-1187-46EC-96A6-E507889E700D}"
