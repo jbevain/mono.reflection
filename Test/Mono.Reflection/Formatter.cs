@@ -73,6 +73,11 @@ namespace Mono.Reflection {
 			return "IL_" + label.Substring (label.Length - 4);
 		}
 
+		static string FormatLabel (Instruction instruction)
+		{
+			return FormatLabel (instruction.Offset);
+		}
+
 		static bool TargetsLocalVariable (OpCode opcode)
 		{
 			return opcode.Name.Contains ("loc");
@@ -90,13 +95,11 @@ namespace Mono.Reflection {
 
 			switch (opcode.OperandType) {
 			case OperandType.ShortInlineBrTarget:
-				writer.Write (FormatLabel ((int) (sbyte) operand));
-				return;
 			case OperandType.InlineBrTarget:
-				writer.Write (FormatLabel ((int) operand));
+				writer.Write (FormatLabel ((Instruction) operand));
 				return;
 			case OperandType.InlineSwitch:
-				WriteLabelList (writer, (int []) operand);
+				WriteLabelList (writer, (Instruction []) operand);
 				return;
 			case OperandType.InlineString:
 				writer.Write ("\"" + operand.ToString () + "\"");
@@ -144,13 +147,13 @@ namespace Mono.Reflection {
 			}
 		}
 
-		static void WriteLabelList (TextWriter writer, int [] offsets)
+		static void WriteLabelList (TextWriter writer, Instruction [] targets)
 		{
 			writer.Write ("(");
 
-			for (int i = 0; i < offsets.Length; i++) {
+			for (int i = 0; i < targets.Length; i++) {
 				if (i != 0) writer.Write (", ");
-				writer.Write (FormatLabel (offsets [i]));
+				writer.Write (FormatLabel (targets [i]));
 			}
 
 			writer.Write (")");

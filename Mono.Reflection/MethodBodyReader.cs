@@ -35,8 +35,8 @@ namespace Mono.Reflection {
 
 	class MethodBodyReader {
 
-		static OpCode [] one_byte_opcodes;
-		static OpCode [] two_bytes_opcodes;
+		static readonly OpCode [] one_byte_opcodes;
+		static readonly OpCode [] two_bytes_opcodes;
 
 		static MethodBodyReader ()
 		{
@@ -46,8 +46,8 @@ namespace Mono.Reflection {
 			var fields = typeof (OpCodes).GetFields (
 				BindingFlags.Public | BindingFlags.Static);
 
-			for (int i = 0; i < fields.Length; i++) {
-				var opcode = (OpCode) fields [i].GetValue (null);
+			foreach (var field in fields) {
+				var opcode = (OpCode) field.GetValue (null);
 				if (opcode.OpCodeType == OpCodeType.Nternal)
 					continue;
 
@@ -58,15 +58,15 @@ namespace Mono.Reflection {
 			}
 		}
 
-		MethodBase method;
-		MethodBody body;
-		Module module;
-		Type [] type_arguments;
-		Type [] method_arguments;
-		ByteBuffer il;
-		ParameterInfo [] parameters;
-		IList<LocalVariableInfo> locals;
-		List<Instruction> instructions = new List<Instruction> ();
+		readonly MethodBase method;
+		readonly MethodBody body;
+		readonly Module module;
+		readonly Type [] type_arguments;
+		readonly Type [] method_arguments;
+		readonly ByteBuffer il;
+		readonly ParameterInfo [] parameters;
+		readonly IList<LocalVariableInfo> locals;
+		readonly List<Instruction> instructions = new List<Instruction> ();
 
 		MethodBodyReader (MethodBase method)
 		{
@@ -109,6 +109,8 @@ namespace Mono.Reflection {
 				instructions.Add (instruction);
 				previous = instruction;
 			}
+
+			ResolveBranches ();
 		}
 
 		void ReadOperand (Instruction instruction)
@@ -126,7 +128,7 @@ namespace Mono.Reflection {
 				instruction.Operand = branches;
 				break;
 			case OperandType.ShortInlineBrTarget:
-				instruction.Operand = (sbyte) (((sbyte) il.ReadByte ()) + il.position);
+				instruction.Operand = (((sbyte) il.ReadByte ()) + il.position);
 				break;
 			case OperandType.InlineBrTarget:
 				instruction.Operand = il.ReadInt32 () + il.position;
@@ -170,6 +172,51 @@ namespace Mono.Reflection {
 			default:
 				throw new NotSupportedException ();
 			}
+		}
+
+		void ResolveBranches ()
+		{
+			foreach (var instruction in instructions) {
+				switch (instruction.OpCode.OperandType) {
+				case OperandType.ShortInlineBrTarget:
+				case OperandType.InlineBrTarget:
+					instruction.Operand = GetInstruction (instructions, (int) instruction.Operand);
+					break;
+				case OperandType.InlineSwitch:
+					var offsets = (int []) instruction.Operand;
+					var branches = new Instruction [offsets.Length];
+					for (int j = 0; j < offsets.Length; j++)
+						branches [j] = GetInstruction (instructions, offsets [j]);
+
+					instruction.Operand = branches;
+					break;
+				}
+			}
+		}
+
+		static Instruction GetInstruction (List<Instruction> instructions, int offset)
+		{
+			var size = instructions.Count;
+			if (offset < 0 || offset > instructions [size - 1].Offset)
+				return null;
+
+			int min = 0;
+			int max = size - 1;
+			while (min <= max) {
+				int mid = min + ((max - min) / 2);
+				var instruction = instructions [mid];
+				var instruction_offset = instruction.Offset;
+
+				if (offset == instruction_offset)
+					return instruction;
+
+				if (offset < instruction_offset)
+					max = mid - 1;
+				else
+					min = mid + 1;
+			}
+
+			return null;
 		}
 
 		object GetVariable (Instruction instruction, int index)
