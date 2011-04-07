@@ -28,6 +28,7 @@
 
 using System;
 using System.Reflection.Emit;
+using System.Text;
 
 namespace Mono.Reflection {
 
@@ -107,7 +108,49 @@ namespace Mono.Reflection {
 
 		public override string ToString ()
 		{
-			return opcode.Name;
+			var instruction = new StringBuilder ();
+
+			AppendLabel (instruction, this);
+			instruction.Append (':');
+			instruction.Append (' ');
+			instruction.Append (opcode.Name);
+
+			if (operand == null)
+				return instruction.ToString ();
+
+			instruction.Append (' ');
+
+			switch (opcode.OperandType) {
+			case OperandType.ShortInlineBrTarget:
+			case OperandType.InlineBrTarget:
+				AppendLabel (instruction, (Instruction) operand);
+				break;
+			case OperandType.InlineSwitch:
+				var labels = (Instruction []) operand;
+				for (int i = 0; i < labels.Length; i++) {
+					if (i > 0)
+						instruction.Append (',');
+
+					AppendLabel (instruction, labels [i]);
+				}
+				break;
+			case OperandType.InlineString:
+				instruction.Append ('\"');
+				instruction.Append (operand);
+				instruction.Append ('\"');
+				break;
+			default:
+				instruction.Append (operand);
+				break;
+			}
+
+			return instruction.ToString ();
+		}
+
+		static void AppendLabel (StringBuilder builder, Instruction instruction)
+		{
+			builder.Append ("IL_");
+			builder.Append (instruction.offset.ToString ("x4"));
 		}
 	}
 }
