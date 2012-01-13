@@ -66,7 +66,7 @@ namespace Mono.Reflection {
 		readonly ByteBuffer il;
 		readonly ParameterInfo [] parameters;
 		readonly IList<LocalVariableInfo> locals;
-		readonly List<Instruction> instructions = new List<Instruction> ();
+		readonly List<Instruction> instructions;
 
 		MethodBodyReader (MethodBase method)
 		{
@@ -90,6 +90,7 @@ namespace Mono.Reflection {
 			this.locals = body.LocalVariables;
 			this.module = method.Module;
 			this.il = new ByteBuffer (bytes);
+			this.instructions = new List<Instruction> ((bytes.Length + 1) / 2);
 		}
 
 		void ReadInstructions ()
@@ -221,10 +222,9 @@ namespace Mono.Reflection {
 
 		object GetVariable (Instruction instruction, int index)
 		{
-			if (TargetsLocalVariable (instruction.OpCode))
-				return GetLocalVariable (index);
-
-			return GetParameter (index);
+			return TargetsLocalVariable (instruction.OpCode)
+				? (object) GetLocalVariable (index)
+				: (object) GetParameter (index);
 		}
 
 		static bool TargetsLocalVariable (OpCode opcode)
@@ -239,10 +239,7 @@ namespace Mono.Reflection {
 
 		ParameterInfo GetParameter (int index)
 		{
-			if (!method.IsStatic)
-				index--;
-
-			return parameters [index];
+			return parameters [method.IsStatic ? index : index - 1];
 		}
 
 		OpCode ReadOpCode ()
