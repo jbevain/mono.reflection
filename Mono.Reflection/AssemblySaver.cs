@@ -295,14 +295,14 @@ namespace Mono.Reflection {
 		private FieldReference CreateReference (FieldInfo field)
 		{
 			var reference = _module_definition.Import (field);
-			reference.DeclaringType = MapReference (reference.DeclaringType);
+			MapReference (reference.DeclaringType);
 			return reference;
 		}
 
 		private MethodReference CreateReference (MethodBase method)
 		{
 			var reference = _module_definition.Import (method);
-			reference.DeclaringType = MapReference (reference.DeclaringType);
+			MapReference (reference.GetElementMethod ().DeclaringType);
 			return reference;
 		}
 
@@ -315,7 +315,7 @@ namespace Mono.Reflection {
 			if (reference.FullName != _assembly_definition.FullName)
 				return type;
 
-			type.Scope = _module_definition;
+			type.GetElementType ().Scope = _module_definition;
 			_module_definition.AssemblyReferences.Remove (reference);
 			return type;
 		}
