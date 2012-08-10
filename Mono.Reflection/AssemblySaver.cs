@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -125,6 +126,7 @@ namespace Mono.Reflection {
 		{
 			MapVariables (method, method_definition);
 			MapInstructions (method, method_definition);
+			MapExceptions (method, method_definition);
 		}
 
 		private void MapInstructions (MethodBase method, MethodDefinition method_definition)
@@ -185,6 +187,42 @@ namespace Mono.Reflection {
 			}
 
 			method_definition.Body.InitLocals = body.InitLocals;
+		}
+
+		private void MapExceptions (MethodBase method, MethodDefinition method_definition)
+		{
+			var body = method.GetMethodBody ();
+			if (body == null)
+				return;
+
+			var instructions = method.GetInstructions ();
+
+			foreach (var clause in body.ExceptionHandlingClauses) {
+				var handler = new ExceptionHandler ((ExceptionHandlerType) clause.Flags);
+
+				handler.TryStart = OffsetToInstruction (clause.TryOffset, instructions, method_definition);
+				handler.TryEnd = OffsetToInstruction (clause.TryOffset + clause.TryLength, instructions, method_definition);
+				handler.HandlerStart = OffsetToInstruction (clause.HandlerOffset, instructions, method_definition);
+				handler.HandlerEnd = OffsetToInstruction (clause.HandlerOffset + clause.HandlerLength, instructions, method_definition);
+
+				switch (handler.HandlerType) {
+				case ExceptionHandlerType.Catch:
+					handler.CatchType = CreateReference (clause.CatchType, method_definition);
+					break;
+				case ExceptionHandlerType.Filter:
+					handler.FilterStart = OffsetToInstruction (clause.FilterOffset, instructions, method_definition);
+					break;
+				}
+			}
+		}
+
+		private static Cecil.Cil.Instruction OffsetToInstruction (int offset, IList<Instruction> instructions, MethodDefinition method_definition)
+		{
+			var instruction = instructions.FirstOrDefault (i => i.Offset == offset);
+			if (instruction == null)
+				return null;
+
+			return method_definition.Body.Instructions [instructions.IndexOf (instruction)];
 		}
 
 		private static AssemblyDefinition AssemblyDefinitionFor (Assembly assembly)
@@ -272,7 +310,7 @@ namespace Mono.Reflection {
 		{
 			return typeof (OpCodes)
 				.GetFields (BindingFlags.Static | BindingFlags.Public)
-				.Select (f => f.GetValue(null))
+				.Select (f => f.GetValue (null))
 				.Cast<OpCode> ()
 				.First (o => o.Name == instruction.OpCode.Name);
 		}
