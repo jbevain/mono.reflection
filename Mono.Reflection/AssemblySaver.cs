@@ -47,11 +47,11 @@ namespace Mono.Reflection {
 					MapMethodBody (method, method_definition);
 				}
 
-				foreach (var property in type.GetProperties(AllDeclared)) {
-					var property_definition = PropertyDefinitionFor (property, type_definition);
+				foreach (var property in type.GetProperties (AllDeclared))
+					MapProperty (property, PropertyDefinitionFor (property, type_definition));
 
-					MapProperty (property, property_definition);
-				}
+				foreach (var evt in type.GetEvents (AllDeclared))
+					MapEvent (evt, EventDefinitionFor (evt, type_definition));
 			}
 
 			return _assembly_definition;
@@ -84,6 +84,41 @@ namespace Mono.Reflection {
 			declaringType.Properties.Add (property_definition);
 
 			return property_definition;
+		}
+
+		private static void MapEvent (EventInfo evt, EventDefinition event_definition)
+		{
+			var type_definition = event_definition.DeclaringType;
+
+			var add = evt.GetAddMethod (nonPublic: true);
+			if (add != null) {
+				event_definition.AddMethod = type_definition.Methods.Single (m => m.Name == add.Name);
+				event_definition.AddMethod.IsAddOn = true;
+			}
+
+			var remove = evt.GetRemoveMethod (nonPublic: true);
+			if (remove != null) {
+				event_definition.RemoveMethod = type_definition.Methods.Single (m => m.Name == remove.Name);
+				event_definition.RemoveMethod.IsRemoveOn = true;
+			}
+
+			var raise = evt.GetRaiseMethod (nonPublic: true);
+			if (raise != null) {
+				event_definition.InvokeMethod = type_definition.Methods.Single (m => m.Name == raise.Name);
+				event_definition.InvokeMethod.IsFire = true;
+			}
+		}
+
+		private EventDefinition EventDefinitionFor (EventInfo evt, TypeDefinition declaringType)
+		{
+			var event_definition = new EventDefinition (
+				evt.Name,
+				(Cecil.EventAttributes) evt.Attributes,
+				_module_definition.Import (evt.EventHandlerType, declaringType));
+
+			declaringType.Events.Add (event_definition);
+
+			return event_definition;
 		}
 
 		private void MapMethodBody (MethodBase method, MethodDefinition method_definition)
