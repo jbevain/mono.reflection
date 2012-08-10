@@ -9,6 +9,8 @@ using Mono.Cecil;
 using Mono.Cecil.Cil;
 
 using NUnit.Framework;
+using MethodAttributes = System.Reflection.MethodAttributes;
+using PropertyAttributes = System.Reflection.PropertyAttributes;
 
 namespace Mono.Reflection {
 
@@ -81,6 +83,35 @@ namespace Mono.Reflection {
 			var baz = bar.Methods.Single (m => m.Name == "Baz");
 
 			Assert.AreEqual (4, baz.Body.Instructions.Count);
+		}
+
+		[Test]
+		public void SimpleProperty ()
+		{
+			var module = Save ((a, m) => {
+				var type = m.DefineType ("Foo.Bar");
+
+				var property = type.DefineProperty ("Baz", PropertyAttributes.None, typeof (int), Type.EmptyTypes);
+
+				var set_Baz = type.DefineMethod ("set_Baz", MethodAttributes.Public, typeof (void), new[] { typeof (int) });
+				set_Baz.GetILGenerator().Emit (SRE.OpCodes.Ret);
+
+				var get_Baz = type.DefineMethod ("get_Baz", MethodAttributes.Public, typeof (int), Type.EmptyTypes);
+				var il = get_Baz.GetILGenerator ();
+				il.Emit (SRE.OpCodes.Ldc_I4_0);
+				il.Emit (SRE.OpCodes.Ret);
+
+				property.SetSetMethod (set_Baz);
+				property.SetGetMethod (get_Baz);
+
+				type.CreateType ();
+			});
+
+			var bar = module.GetType ("Foo.Bar");
+			var baz = bar.Properties.Single(m => m.Name == "Baz");
+
+			Assert.AreEqual ("set_Baz", baz.SetMethod.Name);
+			Assert.AreEqual ("get_Baz", baz.GetMethod.Name);
 		}
 	}
 }

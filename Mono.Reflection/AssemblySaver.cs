@@ -62,12 +62,16 @@ namespace Mono.Reflection {
 			var type_definition = property_definition.DeclaringType;
 
 			var getter = property.GetGetMethod (nonPublic: true);
-			if (getter != null)
+			if (getter != null) {
 				property_definition.GetMethod = type_definition.Methods.Single (m => m.Name == getter.Name);
+				property_definition.GetMethod.IsGetter = true;
+			}
 
 			var setter = property.GetSetMethod (nonPublic: true);
-			if (setter != null)
+			if (setter != null) {
 				property_definition.SetMethod = type_definition.Methods.Single (m => m.Name == setter.Name);
+				property_definition.SetMethod.IsSetter = true;
+			}
 		}
 
 		private PropertyDefinition PropertyDefinitionFor (PropertyInfo property, TypeDefinition declaringType)
@@ -146,7 +150,7 @@ namespace Mono.Reflection {
 			return assembly_definition;
 		}
 
-		private MethodDefinition MethodDefinitionFor(MethodBase method, TypeDefinition declaringType)
+		private MethodDefinition MethodDefinitionFor (MethodBase method, TypeDefinition declaringType)
 		{
 			var method_definition = new MethodDefinition (
 				method.Name,
@@ -173,7 +177,7 @@ namespace Mono.Reflection {
 			return method_definition;
 		}
 
-		private FieldDefinition FieldDefinitionFor(FieldInfo field, TypeDefinition declaringType)
+		private FieldDefinition FieldDefinitionFor (FieldInfo field, TypeDefinition declaringType)
 		{
 			var field_definition = new FieldDefinition (
 				field.Name,
