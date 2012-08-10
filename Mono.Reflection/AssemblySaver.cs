@@ -79,7 +79,7 @@ namespace Mono.Reflection {
 			var property_definition = new PropertyDefinition (
 				property.Name,
 				(Cecil.PropertyAttributes) property.Attributes,
-				_module_definition.Import (property.PropertyType, declaringType));
+				CreateReference (property.PropertyType, declaringType));
 
 			declaringType.Properties.Add (property_definition);
 
@@ -114,7 +114,7 @@ namespace Mono.Reflection {
 			var event_definition = new EventDefinition (
 				evt.Name,
 				(Cecil.EventAttributes) evt.Attributes,
-				_module_definition.Import (evt.EventHandlerType, declaringType));
+				CreateReference (evt.EventHandlerType, declaringType));
 
 			declaringType.Events.Add (event_definition);
 
@@ -123,10 +123,13 @@ namespace Mono.Reflection {
 
 		private void MapMethodBody (MethodBase method, MethodDefinition method_definition)
 		{
+			MapVariables (method, method_definition);
+			MapInstructions (method, method_definition);
+		}
+
+		private void MapInstructions (MethodBase method, MethodDefinition method_definition)
+		{
 			foreach (var instruction in method.GetInstructions ()) {
-
-				MapVariables (method, method_definition);
-
 				var il = method_definition.Body.GetILProcessor ();
 
 				var op = OpCodeFor (instruction);
@@ -136,10 +139,21 @@ namespace Mono.Reflection {
 					il.Emit (op);
 					break;
 				case OperandType.InlineMethod:
-					il.Emit (op, _module_definition.Import ((MethodBase) instruction.Operand));
+					il.Emit (op, CreateReference ((MethodBase) instruction.Operand));
 					break;
 				case OperandType.InlineField:
-					il.Emit (op, _module_definition.Import ((FieldInfo) instruction.Operand));
+					il.Emit (op, CreateReference ((FieldInfo) instruction.Operand));
+					break;
+				case OperandType.InlineTok:
+					var member = (MemberInfo) instruction.Operand;
+					if (member is Type)
+						il.Emit (op, CreateReference ((Type) instruction.Operand));
+					else if (member is FieldInfo)
+						il.Emit (op, CreateReference ((FieldInfo) instruction.Operand));
+					else if (member is MethodBase)
+						il.Emit (op, CreateReference ((MethodBase) instruction.Operand));
+					else
+						throw new NotSupportedException ();
 					break;
 				case OperandType.InlineI:
 					il.Emit (op, (int) instruction.Operand);
@@ -166,7 +180,7 @@ namespace Mono.Reflection {
 				return;
 
 			foreach (var variable in body.LocalVariables) {
-				var variable_type = _module_definition.Import (variable.LocalType);
+				var variable_type = CreateReference (variable.LocalType, method_definition);
 				method_definition.Body.Variables.Add (new VariableDefinition (variable.IsPinned ? new PinnedType (variable_type) : variable_type));
 			}
 
@@ -204,10 +218,10 @@ namespace Mono.Reflection {
 				method_definition.Parameters.Add (new ParameterDefinition (
 					parameter.Name,
 					(Cecil.ParameterAttributes) parameter.Attributes,
-					_module_definition.Import (parameter.ParameterType, method_definition)));
+					CreateReference (parameter.ParameterType, method_definition)));
 
 			if (method_info != null)
-				method_definition.ReturnType = _module_definition.Import (method_info.ReturnType, method_definition);
+				method_definition.ReturnType = CreateReference (method_info.ReturnType, method_definition);
 
 			return method_definition;
 		}
@@ -217,7 +231,7 @@ namespace Mono.Reflection {
 			var field_definition = new FieldDefinition (
 				field.Name,
 				(Cecil.FieldAttributes) field.Attributes,
-				_assembly_definition.MainModule.Import (field.FieldType, declaringType));
+				CreateReference (field.FieldType, declaringType));
 
 			declaringType.Fields.Add (field_definition);
 
@@ -237,7 +251,7 @@ namespace Mono.Reflection {
 
 			_assembly_definition.MainModule.Types.Add (type_definition);
 
-			type_definition.BaseType = _assembly_definition.MainModule.Import (type.BaseType, type_definition);
+			type_definition.BaseType = CreateReference (type.BaseType, type_definition);
 
 			return type_definition;
 		}
@@ -261,6 +275,49 @@ namespace Mono.Reflection {
 				.Select (f => f.GetValue(null))
 				.Cast<OpCode> ()
 				.First (o => o.Name == instruction.OpCode.Name);
+		}
+
+		private TypeReference CreateReference (Type type)
+		{
+			return MapReference (_module_definition.Import (type));
+		}
+
+		private TypeReference CreateReference (Type type, TypeReference context)
+		{
+			return MapReference (_module_definition.Import (type, context));
+		}
+
+		private TypeReference CreateReference (Type type, MethodReference context)
+		{
+			return MapReference (_module_definition.Import (type, context));
+		}
+
+		private FieldReference CreateReference (FieldInfo field)
+		{
+			var reference = _module_definition.Import (field);
+			reference.DeclaringType = MapReference (reference.DeclaringType);
+			return reference;
+		}
+
+		private MethodReference CreateReference (MethodBase method)
+		{
+			var reference = _module_definition.Import (method);
+			reference.DeclaringType = MapReference (reference.DeclaringType);
+			return reference;
+		}
+
+		private TypeReference MapReference (TypeReference type)
+		{
+			if (type.Scope.MetadataScopeType != MetadataScopeType.AssemblyNameReference)
+				return type;
+
+			var reference = (AssemblyNameReference) type.Scope;
+			if (reference.FullName != _assembly_definition.FullName)
+				return type;
+
+			type.Scope = _module_definition;
+			_module_definition.AssemblyReferences.Remove (reference);
+			return type;
 		}
 	}
 
