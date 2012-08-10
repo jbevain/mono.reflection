@@ -39,6 +39,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Mono.Reflection\AssemblySaver.cs" />
     <Compile Include="Mono.Reflection\AssemblyInfo.cs" />
     <Compile Include="Mono.Reflection\ByteBuffer.cs" />
     <Compile Include="Mono.Reflection\BackingFieldResolver.cs" />
@@ -50,6 +51,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="mono.snk" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\cecil\Mono.Cecil.csproj">
+      <Project>{D68133BD-1E63-496E-9EDE-4FBDBF77B486}</Project>
+      <Name>Mono.Cecil</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
