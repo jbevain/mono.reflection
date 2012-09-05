@@ -34,10 +34,10 @@ namespace Mono.Reflection {
 			_assembly_definition = AssemblyDefinitionFor (_assembly);
 			_module_definition = _assembly_definition.MainModule;
 
-			foreach (var type in _assembly.GetTypes().Where(t => !t.IsNested)) {
-				var type_definition = TypeDefinitionFor(type);
+			foreach (var type in _assembly.GetTypes ().Where (t => !t.IsNested)) {
+				var type_definition = TypeDefinitionFor (type);
 
-				foreach (var field in type.GetFields(AllDeclared))
+				foreach (var field in type.GetFields (AllDeclared))
 					FieldDefinitionFor (field, type_definition);
 
 				foreach (var method in type.GetConstructors (AllDeclared).Cast<MethodBase> ().Concat (type.GetMethods (AllDeclared))) {
