@@ -462,12 +462,26 @@ namespace Mono.Reflection {
 				var custom_attribute = new CustomAttribute (CreateReference (custom_attribute_data.Constructor));
 
 				foreach (var argument in custom_attribute_data.ConstructorArguments) {
-					custom_attribute.ConstructorArguments.Add (
-						new CustomAttributeArgument (CreateReference (argument.ArgumentType), argument.Value));
+					custom_attribute.ConstructorArguments.Add (CustomAttributeArgumentFor (argument));
+				}
+
+				foreach (var named_argument in custom_attribute_data.NamedArguments) {
+					var argument = new Cecil.CustomAttributeNamedArgument (named_argument.MemberInfo.Name, CustomAttributeArgumentFor (named_argument.TypedValue));
+					if (named_argument.MemberInfo is PropertyInfo)
+						custom_attribute.Properties.Add (argument);
+					else if (named_argument.MemberInfo is FieldInfo)
+						custom_attribute.Fields.Add (argument);
+					else
+						throw new NotSupportedException ();
 				}
 
 				targetProvider.CustomAttributes.Add (custom_attribute);
 			}
+		}
+
+		private CustomAttributeArgument CustomAttributeArgumentFor (CustomAttributeTypedArgument argument)
+		{
+			return new CustomAttributeArgument (CreateReference (argument.ArgumentType), argument.Value);
 		}
 	}
 
