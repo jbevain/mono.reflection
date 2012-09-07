@@ -131,7 +131,9 @@ namespace Mono.Reflection {
 
 		private void MapInstructions (MethodBase method, MethodDefinition method_definition)
 		{
-			foreach (var instruction in method.GetInstructions ()) {
+			var instructions = method.GetInstructions ();
+
+			foreach (var instruction in instructions) {
 				var il = method_definition.Body.GetILProcessor ();
 
 				var op = OpCodeFor (instruction);
@@ -157,20 +159,63 @@ namespace Mono.Reflection {
 					else
 						throw new NotSupportedException ();
 					break;
+				case OperandType.ShortInlineI:
+					if (op.Code == Code.Ldc_I4_S)
+						il.Emit (op, (sbyte) instruction.Operand);
+					else
+						il.Emit (op, (byte) instruction.Operand);
+					break;
 				case OperandType.InlineI:
 					il.Emit (op, (int) instruction.Operand);
 					break;
+				case OperandType.InlineI8:
+					il.Emit (op, (long) instruction.Operand);
+					break;
+				case OperandType.ShortInlineR:
+					il.Emit (op, (float) instruction.Operand);
+					break;
+				case OperandType.InlineR:
+					il.Emit (op, (double) instruction.Operand);
+					break;
+				case OperandType.ShortInlineVar:
 				case OperandType.InlineVar:
 					il.Emit (op, VariableFor (instruction, method_definition));
 					break;
+				case OperandType.ShortInlineArg:
 				case OperandType.InlineArg:
 					il.Emit (op, ParameterFor (instruction, method_definition));
 					break;
 				case OperandType.InlineString:
 					il.Emit (op, (string) instruction.Operand);
 					break;
+				case OperandType.ShortInlineBrTarget:
+				case OperandType.InlineBrTarget:
+					il.Emit (op, Cecil.Cil.Instruction.Create (OpCodes.Nop));
+					break;
+				case OperandType.InlineSwitch:
+					il.Emit (op, new [] { Cecil.Cil.Instruction.Create (OpCodes.Nop) });
+					break;
+				case OperandType.InlineSig:
+					throw new NotSupportedException ("InlineSig");
 				default:
-					throw new NotImplementedException (op.OperandType.ToString ());
+					throw new NotSupportedException (op.OperandType.ToString ());
+				}
+			}
+
+			foreach (var instruction in instructions) {
+				var op = OpCodeFor (instruction);
+
+				switch (op.OperandType) {
+				case OperandType.ShortInlineBrTarget:
+				case OperandType.InlineBrTarget:
+					var br = OffsetToInstruction (instruction.Offset, instructions, method_definition);
+					br.Operand = OffsetToInstruction (((Instruction) instruction.Operand).Offset, instructions, method_definition);
+					break;
+
+				case OperandType.InlineSwitch:
+					var @switch = OffsetToInstruction (instruction.Offset, instructions, method_definition);
+					@switch.Operand = ((Instruction []) instruction.Operand).Select (i => OffsetToInstruction (i.Offset, instructions, method_definition)).ToArray ();
+					break;
 				}
 			}
 		}
