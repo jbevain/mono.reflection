@@ -76,6 +76,40 @@ namespace Mono.Reflection {
 		}
 
 		[Test]
+		public void MethodWithBranch ()
+		{
+			var module = Save ((a, m) => {
+				var type = m.DefineType ("Foo.Bar", SR.TypeAttributes.Public);
+
+				var method = type.DefineMethod ("Abs", SR.MethodAttributes.Public, typeof (int), new [] { typeof (int) });
+				var il = method.GetILGenerator ();
+
+				var if_negative = il.DefineLabel ();
+
+				il.Emit (SRE.OpCodes.Ldarg_1);
+				il.Emit (SRE.OpCodes.Ldc_I4_0);
+				il.Emit (SRE.OpCodes.Blt, if_negative);
+
+				il.Emit (SRE.OpCodes.Ldarg_1);
+				il.Emit (SRE.OpCodes.Ret);
+
+				il.MarkLabel (if_negative);
+				il.Emit (SRE.OpCodes.Ldarg_1);
+				il.Emit (SRE.OpCodes.Neg);
+				il.Emit (SRE.OpCodes.Ret);
+
+				type.CreateType ();
+			});
+
+			Load (module, a => {
+				dynamic b = Activator.CreateInstance (a.GetType ("Foo.Bar"));
+
+				Assert.AreEqual (42, b.Abs (42));
+				Assert.AreEqual (42, b.Abs (-42));
+			});
+		}
+
+		[Test]
 		public void SimpleProperty ()
 		{
 			var module = Save ((a, m) => {
