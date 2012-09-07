@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 
+using SR = System.Reflection;
+
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
@@ -37,6 +39,9 @@ namespace Mono.Reflection {
 			foreach (var type in _assembly.GetTypes ().Where (t => !t.IsNested))
 				MapType (type);
 
+			MapCustomAttributes (_assembly, _assembly_definition);
+			MapCustomAttributes (_assembly.ManifestModule, _assembly_definition.MainModule);
+
 			return _assembly_definition;
 		}
 
@@ -45,15 +50,10 @@ namespace Mono.Reflection {
 			var type_definition = TypeDefinitionFor (type, declaringType);
 
 			foreach (var field in type.GetFields (AllDeclared))
-				FieldDefinitionFor (field, type_definition);
+				MapField (type_definition, field);
 
-			foreach (var method in type.GetConstructors (AllDeclared).Cast<MethodBase> ().Concat (type.GetMethods (AllDeclared))) {
-				var method_definition = MethodDefinitionFor (method, type_definition);
-				if (!method_definition.HasBody)
-					continue;
-
-				MapMethodBody (method, method_definition);
-			}
+			foreach (var method in type.GetConstructors (AllDeclared).Cast<MethodBase> ().Concat (type.GetMethods (AllDeclared)))
+				MapMethod (type_definition, method);
 
 			foreach (var property in type.GetProperties (AllDeclared))
 				MapProperty (property, PropertyDefinitionFor (property, type_definition));
@@ -63,9 +63,30 @@ namespace Mono.Reflection {
 
 			foreach (var nested_type in type.GetNestedTypes (BindingFlags.Public | BindingFlags.NonPublic))
 				MapType (nested_type, type_definition);
+
+			MapCustomAttributes (type, type_definition);
 		}
 
-		private static void MapProperty (PropertyInfo property, PropertyDefinition property_definition)
+		private void MapMethod (TypeDefinition type_definition, MethodBase method)
+		{
+			var method_definition = MethodDefinitionFor (method, type_definition);
+
+			MapCustomAttributes (method, method_definition);
+
+			if (!method_definition.HasBody)
+				return;
+
+			MapMethodBody (method, method_definition);
+		}
+
+		private void MapField (TypeDefinition type_definition, FieldInfo field)
+		{
+			var field_definition = FieldDefinitionFor (field, type_definition);
+
+			MapCustomAttributes (field, field_definition);
+		}
+
+		private void MapProperty (PropertyInfo property, PropertyDefinition property_definition)
 		{
 			var type_definition = property_definition.DeclaringType;
 
@@ -80,6 +101,8 @@ namespace Mono.Reflection {
 				property_definition.SetMethod = type_definition.Methods.Single (m => m.Name == setter.Name);
 				property_definition.SetMethod.IsSetter = true;
 			}
+
+			MapCustomAttributes (property, property_definition);
 		}
 
 		private PropertyDefinition PropertyDefinitionFor (PropertyInfo property, TypeDefinition declaringType)
@@ -94,7 +117,7 @@ namespace Mono.Reflection {
 			return property_definition;
 		}
 
-		private static void MapEvent (EventInfo evt, EventDefinition event_definition)
+		private void MapEvent (EventInfo evt, EventDefinition event_definition)
 		{
 			var type_definition = event_definition.DeclaringType;
 
@@ -115,6 +138,8 @@ namespace Mono.Reflection {
 				event_definition.InvokeMethod = type_definition.Methods.Single (m => m.Name == raise.Name);
 				event_definition.InvokeMethod.IsFire = true;
 			}
+
+			MapCustomAttributes (evt, event_definition);
 		}
 
 		private EventDefinition EventDefinitionFor (EventInfo evt, TypeDefinition declaringType)
@@ -216,7 +241,10 @@ namespace Mono.Reflection {
 				case OperandType.ShortInlineBrTarget:
 				case OperandType.InlineBrTarget:
 					var br = OffsetToInstruction (instruction.Offset, instructions, method_definition);
-					br.Operand = OffsetToInstruction (((Instruction) instruction.Operand).Offset, instructions, method_definition);
+					var target = (Instruction) instruction.Operand;
+					if (target != null)
+						br.Operand = OffsetToInstruction (target.Offset, instructions, method_definition);
+
 					break;
 
 				case OperandType.InlineSwitch:
@@ -305,15 +333,24 @@ namespace Mono.Reflection {
 			declaringType.Methods.Add (method_definition);
 
 			foreach (var parameter in method.GetParameters ())
-				method_definition.Parameters.Add (new ParameterDefinition (
-					parameter.Name,
-					(Cecil.ParameterAttributes) parameter.Attributes,
-					CreateReference (parameter.ParameterType, method_definition)));
+				MapParameter (method_definition, parameter);
 
 			if (method_info != null)
 				method_definition.ReturnType = CreateReference (method_info.ReturnType, method_definition);
 
 			return method_definition;
+		}
+
+		private void MapParameter (MethodDefinition method_definition, ParameterInfo parameter)
+		{
+			var parameter_definition = new ParameterDefinition (
+				parameter.Name,
+				(Cecil.ParameterAttributes) parameter.Attributes,
+				CreateReference (parameter.ParameterType, method_definition));
+
+			MapCustomAttributes (parameter, parameter_definition);
+
+			method_definition.Parameters.Add (parameter_definition);
 		}
 
 		private FieldDefinition FieldDefinitionFor (FieldInfo field, TypeDefinition declaringType)
@@ -411,6 +448,26 @@ namespace Mono.Reflection {
 			type.GetElementType ().Scope = _module_definition;
 			_module_definition.AssemblyReferences.Remove (reference);
 			return type;
+		}
+
+		private void MapCustomAttributes (SR.ICustomAttributeProvider provider, Cecil.ICustomAttributeProvider targetProvider)
+		{
+			var method = provider.GetType ().GetMethod ("GetCustomAttributesData");
+			if (method == null)
+				throw new NotSupportedException ("No method GetCustomAttributesData for type " + provider.GetType ().FullName);
+
+			var custom_attributes_data = (IList<CustomAttributeData>) method.Invoke (provider, new object[0]);
+
+			foreach (var custom_attribute_data in custom_attributes_data) {
+				var custom_attribute = new CustomAttribute (CreateReference (custom_attribute_data.Constructor));
+
+				foreach (var argument in custom_attribute_data.ConstructorArguments) {
+					custom_attribute.ConstructorArguments.Add (
+						new CustomAttributeArgument (CreateReference (argument.ArgumentType), argument.Value));
+				}
+
+				targetProvider.CustomAttributes.Add (custom_attribute);
+			}
 		}
 	}
 
