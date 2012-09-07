@@ -34,28 +34,35 @@ namespace Mono.Reflection {
 			_assembly_definition = AssemblyDefinitionFor (_assembly);
 			_module_definition = _assembly_definition.MainModule;
 
-			foreach (var type in _assembly.GetTypes ().Where (t => !t.IsNested)) {
-				var type_definition = TypeDefinitionFor (type);
-
-				foreach (var field in type.GetFields (AllDeclared))
-					FieldDefinitionFor (field, type_definition);
-
-				foreach (var method in type.GetConstructors (AllDeclared).Cast<MethodBase> ().Concat (type.GetMethods (AllDeclared))) {
-					var method_definition = MethodDefinitionFor (method, type_definition);
-					if (!method_definition.HasBody)
-						continue;
-
-					MapMethodBody (method, method_definition);
-				}
-
-				foreach (var property in type.GetProperties (AllDeclared))
-					MapProperty (property, PropertyDefinitionFor (property, type_definition));
-
-				foreach (var evt in type.GetEvents (AllDeclared))
-					MapEvent (evt, EventDefinitionFor (evt, type_definition));
-			}
+			foreach (var type in _assembly.GetTypes ().Where (t => !t.IsNested))
+				MapType (type);
 
 			return _assembly_definition;
+		}
+
+		private void MapType (Type type, TypeDefinition declaringType = null)
+		{
+			var type_definition = TypeDefinitionFor (type, declaringType);
+
+			foreach (var field in type.GetFields (AllDeclared))
+				FieldDefinitionFor (field, type_definition);
+
+			foreach (var method in type.GetConstructors (AllDeclared).Cast<MethodBase> ().Concat (type.GetMethods (AllDeclared))) {
+				var method_definition = MethodDefinitionFor (method, type_definition);
+				if (!method_definition.HasBody)
+					continue;
+
+				MapMethodBody (method, method_definition);
+			}
+
+			foreach (var property in type.GetProperties (AllDeclared))
+				MapProperty (property, PropertyDefinitionFor (property, type_definition));
+
+			foreach (var evt in type.GetEvents (AllDeclared))
+				MapEvent (evt, EventDefinitionFor (evt, type_definition));
+
+			foreach (var nested_type in type.GetNestedTypes (BindingFlags.Public | BindingFlags.NonPublic))
+				MapType (nested_type, type_definition);
 		}
 
 		private static void MapProperty (PropertyInfo property, PropertyDefinition property_definition)
@@ -321,7 +328,7 @@ namespace Mono.Reflection {
 			return field_definition;
 		}
 
-		private TypeDefinition TypeDefinitionFor (Type type)
+		private TypeDefinition TypeDefinitionFor (Type type, TypeDefinition declaringType)
 		{
 			var type_definition = new TypeDefinition (
 				type.Namespace,
@@ -332,7 +339,10 @@ namespace Mono.Reflection {
 			foreach (var arg in type.GetGenericArguments ())
 				type_definition.GenericParameters.Add (new GenericParameter (arg.Name, type_definition));
 
-			_assembly_definition.MainModule.Types.Add (type_definition);
+			if (declaringType == null)
+				_assembly_definition.MainModule.Types.Add (type_definition);
+			else
+				declaringType.NestedTypes.Add (type_definition);
 
 			type_definition.BaseType = CreateReference (type.BaseType, type_definition);
 
