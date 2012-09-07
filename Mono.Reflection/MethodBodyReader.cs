@@ -98,7 +98,12 @@ namespace Mono.Reflection {
 			Instruction previous = null;
 
 			while (il.position < il.buffer.Length) {
-				var instruction = new Instruction (il.position, ReadOpCode ());
+				var offset = il.position;
+				var opcode = ReadOpCode ();
+
+				var instruction = IsLoadThis (opcode)
+					? new Instruction (offset, OpCodes.Ldarg_0)
+					: new Instruction (offset, opcode);
 
 				ReadOperand (instruction);
 
@@ -112,6 +117,34 @@ namespace Mono.Reflection {
 			}
 
 			ResolveBranches ();
+		}
+
+		bool IsLoadThis (OpCode opcode)
+		{
+			if (method.IsStatic)
+				return false;
+
+			if (opcode == OpCodes.Ldarg_S) {
+				var index = il.ReadByte ();
+
+				if (index == 0)
+					return true;
+
+				il.position--;
+				return false;
+			}
+
+			if (opcode == OpCodes.Ldarg) {
+				var index = il.ReadInt16();
+
+				if (index == 0)
+					return true;
+
+				il.position -= 2;
+				return false;
+			}
+
+			return false;
 		}
 
 		void ReadOperand (Instruction instruction)
