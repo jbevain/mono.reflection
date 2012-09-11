@@ -335,6 +335,8 @@ namespace Mono.Reflection {
 				(Cecil.MethodAttributes) method.Attributes,
 				_module_definition.TypeSystem.Void);
 
+			method_definition.ImplAttributes = (Cecil.MethodImplAttributes) (int) method.GetMethodImplementationFlags ();
+
 			var method_info = method as MethodInfo;
 
 			if (method_info != null)
