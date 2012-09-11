@@ -180,6 +180,9 @@ namespace Mono.Reflection {
 				case OperandType.InlineField:
 					il.Emit (op, CreateReference ((FieldInfo) instruction.Operand));
 					break;
+				case OperandType.InlineType:
+					il.Emit (op, CreateReference ((Type) instruction.Operand));
+					break;
 				case OperandType.InlineTok:
 					var member = (MemberInfo) instruction.Operand;
 					if (member is Type)
