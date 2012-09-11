@@ -81,7 +81,7 @@ namespace Mono.Reflection {
 
 		private static bool ShouldMapBody (MethodBase method, MethodDefinition method_definition)
 		{
-			return method_definition.HasBody && method.GetMethodBody() != null;
+			return method_definition.HasBody /*&& method.GetMethodBody() != null*/;
 		}
 
 		private void MapField (TypeDefinition type_definition, FieldInfo field)
