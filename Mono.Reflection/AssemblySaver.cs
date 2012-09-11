@@ -401,13 +401,19 @@ namespace Mono.Reflection {
 			return method.Body.Variables [local.LocalIndex];
 		}
 
+		private static readonly OpCode[] _opcodes = typeof (OpCodes)
+			.GetFields (BindingFlags.Static | BindingFlags.Public)
+			.Select (f => f.GetValue (null))
+			.Cast<OpCode> ()
+			.ToArray ();
+
 		private static OpCode OpCodeFor (Instruction instruction)
 		{
-			return typeof (OpCodes)
-				.GetFields (BindingFlags.Static | BindingFlags.Public)
-				.Select (f => f.GetValue (null))
-				.Cast<OpCode> ()
-				.First (o => o.Name == instruction.OpCode.Name);
+			foreach (var opcode in _opcodes)
+				if (opcode.Name == instruction.OpCode.Name)
+					return opcode;
+
+			throw new NotSupportedException("OpCode not found: " + instruction.OpCode.Name);
 		}
 
 		private TypeReference CreateReference (Type type)
