@@ -410,7 +410,7 @@ namespace Mono.Reflection {
 		private static OpCode OpCodeFor (Instruction instruction)
 		{
 			foreach (var opcode in _opcodes)
-				if (opcode.Name == instruction.OpCode.Name)
+				if (opcode.Value == instruction.OpCode.Value)
 					return opcode;
 
 			throw new NotSupportedException("OpCode not found: " + instruction.OpCode.Name);
