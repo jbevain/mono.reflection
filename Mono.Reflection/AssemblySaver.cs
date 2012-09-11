@@ -73,15 +73,23 @@ namespace Mono.Reflection {
 
 			MapCustomAttributes (method, method_definition);
 
-			if (!method_definition.HasBody)
+			if (!ShouldMapBody(method, method_definition))
 				return;
 
 			MapMethodBody (method, method_definition);
 		}
 
+		private static bool ShouldMapBody (MethodBase method, MethodDefinition method_definition)
+		{
+			return method_definition.HasBody && method.GetMethodBody() != null;
+		}
+
 		private void MapField (TypeDefinition type_definition, FieldInfo field)
 		{
 			var field_definition = FieldDefinitionFor (field, type_definition);
+
+			if (field_definition.HasDefault)
+				field_definition.Constant = field.GetRawConstantValue ();
 
 			MapCustomAttributes (field, field_definition);
 		}
@@ -442,11 +450,25 @@ namespace Mono.Reflection {
 		{
 			var reference = _module_definition.Import (method);
 			MapReference (reference.GetElementMethod ().DeclaringType);
+			MapGenericArguments (reference);
+
 			return reference;
+		}
+
+		private void MapGenericArguments (MemberReference reference)
+		{
+			var instance = reference as IGenericInstance;
+			if (instance == null)
+				return;
+
+			foreach (var arg in instance.GenericArguments)
+				MapReference (arg);
 		}
 
 		private TypeReference MapReference (TypeReference type)
 		{
+			MapGenericArguments (type);
+
 			if (type.Scope.MetadataScopeType != MetadataScopeType.AssemblyNameReference)
 				return type;
 
@@ -490,7 +512,19 @@ namespace Mono.Reflection {
 
 		private CustomAttributeArgument CustomAttributeArgumentFor (CustomAttributeTypedArgument argument)
 		{
-			return new CustomAttributeArgument (CreateReference (argument.ArgumentType), argument.Value);
+			return new CustomAttributeArgument (
+				CreateReference (argument.ArgumentType),
+				MapCustomAttributeValue (argument));
+		}
+
+		private object MapCustomAttributeValue (CustomAttributeTypedArgument argument)
+		{
+			var value = argument.Value;
+			var type = value as Type;
+			if (type != null)
+				return CreateReference (type);
+
+			return value;
 		}
 	}
 
