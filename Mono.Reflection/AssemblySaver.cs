@@ -81,7 +81,7 @@ namespace Mono.Reflection {
 
 		private static bool ShouldMapBody (MethodBase method, MethodDefinition method_definition)
 		{
-			return method_definition.HasBody /*&& method.GetMethodBody() != null*/;
+			return method_definition.HasBody && method.GetMethodBody() != null;
 		}
 
 		private void MapField (TypeDefinition type_definition, FieldInfo field)
@@ -183,22 +183,22 @@ namespace Mono.Reflection {
 					il.Emit (op);
 					break;
 				case OperandType.InlineMethod:
-					il.Emit (op, CreateReference ((MethodBase) instruction.Operand));
+					il.Emit (op, CreateReference ((MethodBase) instruction.Operand, method_definition));
 					break;
 				case OperandType.InlineField:
-					il.Emit (op, CreateReference ((FieldInfo) instruction.Operand));
+					il.Emit (op, CreateReference ((FieldInfo) instruction.Operand, method_definition));
 					break;
 				case OperandType.InlineType:
-					il.Emit (op, CreateReference ((Type) instruction.Operand));
+					il.Emit (op, CreateReference ((Type) instruction.Operand, method_definition));
 					break;
 				case OperandType.InlineTok:
 					var member = (MemberInfo) instruction.Operand;
 					if (member is Type)
-						il.Emit (op, CreateReference ((Type) instruction.Operand));
+						il.Emit (op, CreateReference ((Type) instruction.Operand, method_definition));
 					else if (member is FieldInfo)
-						il.Emit (op, CreateReference ((FieldInfo) instruction.Operand));
+						il.Emit (op, CreateReference ((FieldInfo) instruction.Operand, method_definition));
 					else if (member is MethodBase)
-						il.Emit (op, CreateReference ((MethodBase) instruction.Operand));
+						il.Emit (op, CreateReference ((MethodBase) instruction.Operand, method_definition));
 					else
 						throw new NotSupportedException ();
 					break;
@@ -439,16 +439,16 @@ namespace Mono.Reflection {
 			return MapReference (_module_definition.Import (type, context));
 		}
 
-		private FieldReference CreateReference (FieldInfo field)
+		private FieldReference CreateReference (FieldInfo field, MethodReference context)
 		{
-			var reference = _module_definition.Import (field);
+			var reference = _module_definition.Import (field, context);
 			MapReference (reference.DeclaringType);
 			return reference;
 		}
 
-		private MethodReference CreateReference (MethodBase method)
+		private MethodReference CreateReference (MethodBase method, MethodReference context)
 		{
-			var reference = _module_definition.Import (method);
+			var reference = _module_definition.Import (method, context);
 			MapReference (reference.GetElementMethod ().DeclaringType);
 			MapGenericArguments (reference);
 
@@ -467,6 +467,9 @@ namespace Mono.Reflection {
 
 		private TypeReference MapReference (TypeReference type)
 		{
+			if (type.IsGenericParameter)
+				return type;
+
 			MapGenericArguments (type);
 
 			if (type.Scope.MetadataScopeType != MetadataScopeType.AssemblyNameReference)
@@ -490,7 +493,7 @@ namespace Mono.Reflection {
 			var custom_attributes_data = (IList<CustomAttributeData>) method.Invoke (provider, new object[0]);
 
 			foreach (var custom_attribute_data in custom_attributes_data) {
-				var custom_attribute = new CustomAttribute (CreateReference (custom_attribute_data.Constructor));
+				var custom_attribute = new CustomAttribute (CreateReference (custom_attribute_data.Constructor, null));
 
 				foreach (var argument in custom_attribute_data.ConstructorArguments) {
 					custom_attribute.ConstructorArguments.Add (CustomAttributeArgumentFor (argument));
