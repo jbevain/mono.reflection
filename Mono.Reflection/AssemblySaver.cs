@@ -316,12 +316,12 @@ namespace Mono.Reflection {
 			var instructions = method.GetInstructions ();
 
 			foreach (var clause in body.ExceptionHandlingClauses) {
-				var handler = new ExceptionHandler ((ExceptionHandlerType) clause.Flags);
-
-				handler.TryStart = OffsetToInstruction (clause.TryOffset, instructions, method_definition);
-				handler.TryEnd = OffsetToInstruction (clause.TryOffset + clause.TryLength, instructions, method_definition);
-				handler.HandlerStart = OffsetToInstruction (clause.HandlerOffset, instructions, method_definition);
-				handler.HandlerEnd = OffsetToInstruction (clause.HandlerOffset + clause.HandlerLength, instructions, method_definition);
+				var handler = new ExceptionHandler ((ExceptionHandlerType) clause.Flags) {
+					TryStart = OffsetToInstruction (clause.TryOffset, instructions, method_definition),
+					TryEnd = OffsetToInstruction (clause.TryOffset + clause.TryLength, instructions, method_definition),
+					HandlerStart = OffsetToInstruction (clause.HandlerOffset, instructions, method_definition),
+					HandlerEnd = OffsetToInstruction (clause.HandlerOffset + clause.HandlerLength, instructions, method_definition)
+				};
 
 				switch (handler.HandlerType) {
 				case ExceptionHandlerType.Catch:
@@ -331,6 +331,8 @@ namespace Mono.Reflection {
 					handler.FilterStart = OffsetToInstruction (clause.FilterOffset, instructions, method_definition);
 					break;
 				}
+
+				method_definition.Body.ExceptionHandlers.Add (handler);
 			}
 		}
 
