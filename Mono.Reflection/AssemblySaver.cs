@@ -61,6 +61,9 @@ namespace Mono.Reflection {
 			foreach (var evt in type.GetEvents (AllDeclared))
 				MapEvent (evt, EventDefinitionFor (evt, type_definition));
 
+			foreach (var iface in type.GetInterfaces())
+				type_definition.Interfaces.Add (CreateReference (iface, type_definition));
+
 			foreach (var nested_type in type.GetNestedTypes (BindingFlags.Public | BindingFlags.NonPublic))
 				MapType (nested_type, type_definition);
 
@@ -72,6 +75,7 @@ namespace Mono.Reflection {
 			var method_definition = MethodDefinitionFor (method, type_definition);
 
 			MapCustomAttributes (method, method_definition);
+			MapOverrides (method, method_definition);
 
 			if (!ShouldMapBody(method, method_definition))
 				return;
@@ -82,6 +86,29 @@ namespace Mono.Reflection {
 		private static bool ShouldMapBody (MethodBase method, MethodDefinition method_definition)
 		{
 			return method_definition.HasBody && method.GetMethodBody() != null;
+		}
+
+		private void MapOverrides (MethodBase method, MethodDefinition method_definition)
+		{
+			var mi = method as MethodInfo;
+			if (mi == null || !mi.IsVirtual)
+				return;
+
+			var type = method.DeclaringType;
+			if (type == null)
+				return;
+
+			var overrides = type
+				.GetInterfaces ()
+				.Select (type.GetInterfaceMap)
+				.SelectMany (m => m.InterfaceMethods.Zip (m.TargetMethods, (im, tm) => new { InterfaceMethod = im, TargetMethod = tm }))
+				.Where (p => p.TargetMethod.DeclaringType == type)
+				.Where (p => p.InterfaceMethod.Name != p.TargetMethod.Name)
+				.Where (p => p.TargetMethod == method)
+				.Select (p => p.InterfaceMethod);
+
+			foreach (var ov in overrides)
+				method_definition.Overrides.Add (CreateReference (ov, method_definition));
 		}
 
 		private void MapField (TypeDefinition type_definition, FieldInfo field)
