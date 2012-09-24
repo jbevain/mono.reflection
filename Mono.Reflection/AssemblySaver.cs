@@ -474,6 +474,7 @@ namespace Mono.Reflection {
 		{
 			var reference = _module_definition.Import (field, context);
 			MapReference (reference.DeclaringType);
+			MapReference (reference.FieldType);
 			return reference;
 		}
 
@@ -481,7 +482,11 @@ namespace Mono.Reflection {
 		{
 			var reference = _module_definition.Import (method, context);
 			MapReference (reference.GetElementMethod ().DeclaringType);
+			MapReference (reference.ReturnType);
 			MapGenericArguments (reference);
+
+			foreach (var parameter in reference.Parameters)
+				MapReference (parameter.ParameterType);
 
 			return reference;
 		}
@@ -501,7 +506,16 @@ namespace Mono.Reflection {
 			if (type.IsGenericParameter)
 				return type;
 
-			MapGenericArguments (type);
+			if (type.IsPointer || type.IsByReference || type.IsPinned || type.IsArray) {
+				MapElementType (type);
+				return type;
+			}
+
+			if (type.IsGenericInstance) {
+				MapGenericArguments (type);
+				MapElementType (type);
+				return type;
+			}
 
 			if (type.Scope.MetadataScopeType != MetadataScopeType.AssemblyNameReference)
 				return type;
@@ -513,6 +527,11 @@ namespace Mono.Reflection {
 			type.GetElementType ().Scope = _module_definition;
 			_module_definition.AssemblyReferences.Remove (reference);
 			return type;
+		}
+
+		private void MapElementType (TypeReference type)
+		{
+			MapReference (((TypeSpecification) type).ElementType);
 		}
 
 		private void MapCustomAttributes (SR.ICustomAttributeProvider provider, Cecil.ICustomAttributeProvider targetProvider)
