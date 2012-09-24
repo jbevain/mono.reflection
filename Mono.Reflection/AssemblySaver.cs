@@ -108,7 +108,7 @@ namespace Mono.Reflection {
 				.Select (p => p.InterfaceMethod);
 
 			foreach (var ov in overrides)
-				method_definition.Overrides.Add (CreateReference (ov, method_definition));
+				method_definition.Overrides.Add (CreateReference (ov, method_definition).GetElementMethod ());
 		}
 
 		private void MapField (TypeDefinition type_definition, FieldInfo field)
