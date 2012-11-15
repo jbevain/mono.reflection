@@ -431,7 +431,9 @@ namespace Mono.Reflection {
 		private IEnumerable<GenericParameter> MapGenericParameters (Type [] genericParameters, IGenericParameterProvider owner)
 		{
 			foreach (var p in genericParameters) {
-				var generic_parameter = new GenericParameter (p.Name, owner);
+				var generic_parameter = new GenericParameter (p.Name, owner) {
+					Attributes = (Cecil.GenericParameterAttributes) (int) p.GenericParameterAttributes
+				};
 
 				foreach (var constraint in p.GetGenericParameterConstraints ())
 					generic_parameter.Constraints.Add (CreateReference (constraint));
