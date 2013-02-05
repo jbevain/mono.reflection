@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
-
+using System.Runtime.InteropServices;
 using SR = System.Reflection;
 using SRE = System.Reflection.Emit;
 
@@ -209,5 +209,10 @@ namespace Mono.Reflection {
 			var data = new [] { 3, 1, 4, 1, 5, 9, 3, 1, 4, 1, 5, 9, 3, 1, 4, 1, 5, 9, 3, 1, 4, 1, 5, 9, 3, 1, 4, 1, 5, 9, 3, 1, 4, 1, 5, 9, };
 			return data.Sum ();
 		}
+	}
+
+	[StructLayout (LayoutKind.Explicit, Pack = 1, Size = 8)]
+	public struct Bar {
+		[FieldOffset (4)] private int baz;
 	}
 }

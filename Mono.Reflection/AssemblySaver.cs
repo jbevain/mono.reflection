@@ -121,6 +121,10 @@ namespace Mono.Reflection {
 			if ((field_definition.Attributes & Cecil.FieldAttributes.HasFieldRVA) != 0)
 				field_definition.InitialValue = GetInitialValue (field);
 
+			var offset = field.GetCustomAttributes (typeof (FieldOffsetAttribute), inherit: false);
+			if (offset.Length > 0)
+				field_definition.Offset = ((FieldOffsetAttribute) offset [0]).Value;
+
 			MapCustomAttributes (field, field_definition);
 		}
 
