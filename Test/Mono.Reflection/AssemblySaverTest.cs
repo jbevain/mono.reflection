@@ -152,14 +152,36 @@ namespace Mono.Reflection {
 			});
 		}
 
+		[Test]
+		public void InitializedField ()
+		{
+			var module = Save (typeof (Foo).Assembly);
+
+			Load (module, a => {
+				dynamic f = Activator.CreateInstance (a.GetType (typeof (Foo).FullName));
+
+				Assert.AreEqual (new Foo ().Bar (), f.Bar ());
+			});
+		}
+
 		private static ModuleDefinition Save (Action<SRE.AssemblyBuilder, SRE.ModuleBuilder> definer)
 		{
-			var name = "Save-" + Guid.NewGuid ().ToString ("D");
+			var name = "Save-" + GuidString ();
 			var assembly = AppDomain.CurrentDomain.DefineDynamicAssembly (new SR.AssemblyName (name), SRE.AssemblyBuilderAccess.Run);
 			var module = assembly.DefineDynamicModule (name);
 
 			definer (assembly, module);
 
+			return Save (assembly);
+		}
+
+		private static string GuidString ()
+		{
+			return Guid.NewGuid ().ToString ("D");
+		}
+
+		private static ModuleDefinition Save (SR.Assembly assembly)
+		{
 			var memory = new MemoryStream ();
 			assembly.SaveTo (memory);
 
@@ -168,14 +190,24 @@ namespace Mono.Reflection {
 
 		private static void Load (ModuleDefinition module, Action<SR.Assembly> asserter)
 		{
-			module.Name += "Loaded";
-			module.Assembly.Name.Name += "Loaded";
+			var name = "Loaded-" + GuidString ();
+			module.Name += name;
+			module.Assembly.Name.Name += name;
 
 			var memory = new MemoryStream ();
 			module.Write (memory);
 
 			var assembly = SR.Assembly.Load (memory.ToArray ());
 			asserter (assembly);
+		}
+	}
+
+	public class Foo {
+
+		public int Bar ()
+		{
+			var data = new [] { 3, 1, 4, 1, 5, 9, 3, 1, 4, 1, 5, 9, 3, 1, 4, 1, 5, 9, 3, 1, 4, 1, 5, 9, 3, 1, 4, 1, 5, 9, 3, 1, 4, 1, 5, 9, };
+			return data.Sum ();
 		}
 	}
 }

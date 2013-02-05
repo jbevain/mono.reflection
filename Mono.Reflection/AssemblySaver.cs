@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-
+using System.Runtime.InteropServices;
 using SR = System.Reflection;
 
 using Mono.Cecil;
@@ -118,7 +118,39 @@ namespace Mono.Reflection {
 			if (field_definition.HasDefault)
 				field_definition.Constant = field.GetRawConstantValue ();
 
+			if ((field_definition.Attributes & Cecil.FieldAttributes.HasFieldRVA) != 0)
+				field_definition.InitialValue = GetInitialValue (field);
+
 			MapCustomAttributes (field, field_definition);
+		}
+
+		private static byte [] GetInitialValue (FieldInfo field)
+		{
+			if (!field.IsStatic)
+				throw new NotSupportedException ();
+
+			var value = field.GetValue (null);
+			if (value == null)
+				return new byte [0];
+
+			var type = value.GetType ();
+			if (!type.IsValueType || type.IsPrimitive)
+				throw new NotSupportedException ();
+
+			return ToByteArray (value);
+		}
+
+		private static byte [] ToByteArray (object @struct)
+		{
+			var size = Marshal.SizeOf (@struct.GetType ());
+			var data = new byte [size];
+			var ptr = Marshal.AllocHGlobal (size);
+
+			Marshal.StructureToPtr (@struct, ptr, fDeleteOld: true);
+			Marshal.Copy (ptr, data, 0, size);
+			Marshal.FreeHGlobal (ptr);
+
+			return data;
 		}
 
 		private void MapProperty (PropertyInfo property, PropertyDefinition property_definition)
@@ -424,6 +456,13 @@ namespace Mono.Reflection {
 				declaringType.NestedTypes.Add (type_definition);
 
 			type_definition.BaseType = CreateReference (type.BaseType, type_definition);
+
+			var layout = type.StructLayoutAttribute;
+
+			if (layout != null) {
+				type_definition.PackingSize = (short) layout.Pack;
+				type_definition.ClassSize = layout.Size;
+			}
 
 			return type_definition;
 		}
