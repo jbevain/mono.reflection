@@ -525,7 +525,7 @@ namespace Mono.Reflection {
 
 			var layout = type.StructLayoutAttribute;
 
-			if (layout != null) {
+			if (layout != null && layout.Value != LayoutKind.Auto) {
 				type_definition.PackingSize = (short) layout.Pack;
 				type_definition.ClassSize = layout.Size;
 			}
