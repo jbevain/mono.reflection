@@ -215,4 +215,10 @@ namespace Mono.Reflection {
 	public struct Bar {
 		[FieldOffset (4)] private int baz;
 	}
+
+	public class Baz {
+
+		[DllImport ("foo.dll", EntryPoint = "Boom")]
+		public static extern void Boum ();
+	}
 }

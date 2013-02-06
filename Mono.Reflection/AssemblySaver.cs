@@ -76,11 +76,73 @@ namespace Mono.Reflection {
 
 			MapCustomAttributes (method, method_definition);
 			MapOverrides (method, method_definition);
+			MapPInvokeInfo (method, method_definition);
 
 			if (!ShouldMapBody(method, method_definition))
 				return;
 
 			MapMethodBody (method, method_definition);
+		}
+
+		private void MapPInvokeInfo (MethodBase method, MethodDefinition method_definition)
+		{
+			var attributes = method.GetCustomAttributes (typeof (DllImportAttribute), inherit: false);
+			if (attributes.Length == 0)
+				return;
+
+			var import = (DllImportAttribute) attributes [0];
+			var info = new PInvokeInfo (0, import.EntryPoint, ModuleReferenceFor (import.Value)) {
+				IsBestFitEnabled = import.BestFitMapping,
+				IsThrowOnUnmappableCharEnabled = import.ThrowOnUnmappableChar,
+				SupportsLastError = import.SetLastError,
+				IsNoMangle = import.ExactSpelling,
+			};
+
+			switch (import.CallingConvention) {
+			case CallingConvention.Cdecl:
+				info.IsCallConvCdecl = true;
+				break;
+			case CallingConvention.FastCall:
+				info.IsCallConvFastcall = true;
+				break;
+			case CallingConvention.StdCall:
+				info.IsCallConvStdCall = true;
+				break;
+			case CallingConvention.ThisCall:
+				info.IsCallConvThiscall = true;
+				break;
+			case CallingConvention.Winapi:
+				info.IsCallConvWinapi = true;
+				break;
+			}
+
+			switch (import.CharSet) {
+			case CharSet.Ansi:
+				info.IsCharSetAnsi = true;
+				break;
+			case CharSet.Auto:
+				info.IsCharSetAuto = true;
+				break;
+			case CharSet.None:
+				info.IsCharSetNotSpec = true;
+				break;
+			case CharSet.Unicode:
+				info.IsCharSetUnicode = true;
+				break;
+			}
+
+			method_definition.PInvokeInfo = info;
+		}
+
+		private ModuleReference ModuleReferenceFor (string name)
+		{
+			foreach (var reference in _module_definition.ModuleReferences)
+				if (reference.Name == name)
+					return reference;
+
+			var module = new ModuleReference (name);
+			_module_definition.ModuleReferences.Add (module);
+			return module;
 		}
 
 		private static bool ShouldMapBody (MethodBase method, MethodDefinition method_definition)
@@ -121,9 +183,9 @@ namespace Mono.Reflection {
 			if ((field_definition.Attributes & Cecil.FieldAttributes.HasFieldRVA) != 0)
 				field_definition.InitialValue = GetInitialValue (field);
 
-			var offset = field.GetCustomAttributes (typeof (FieldOffsetAttribute), inherit: false);
-			if (offset.Length > 0)
-				field_definition.Offset = ((FieldOffsetAttribute) offset [0]).Value;
+			var attributes = field.GetCustomAttributes (typeof (FieldOffsetAttribute), inherit: false);
+			if (attributes.Length > 0)
+				field_definition.Offset = ((FieldOffsetAttribute) attributes [0]).Value;
 
 			MapCustomAttributes (field, field_definition);
 		}
