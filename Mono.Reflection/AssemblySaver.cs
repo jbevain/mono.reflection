@@ -508,7 +508,7 @@ namespace Mono.Reflection {
 		private TypeDefinition TypeDefinitionFor (Type type, TypeDefinition declaringType)
 		{
 			var type_definition = new TypeDefinition (
-				type.Namespace,
+				(declaringType == null) ? type.Namespace : "",
 				type.Name,
 				(Cecil.TypeAttributes) type.Attributes,
 				_assembly_definition.MainModule.TypeSystem.Object);
