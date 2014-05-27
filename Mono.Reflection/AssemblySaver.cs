@@ -464,13 +464,18 @@ namespace Mono.Reflection {
 
 			method_definition.ImplAttributes = (Cecil.MethodImplAttributes) (int) method.GetMethodImplementationFlags ();
 
+			declaringType.Methods.Add (method_definition);
+
 			var method_info = method as MethodInfo;
 
-			if (method_info != null)
-				foreach (var generic_parameter in MapGenericParameters (method_info.GetGenericArguments (), method_definition))
-					method_definition.GenericParameters.Add (generic_parameter);
+			if (method_info != null) {
+				var generic_parameters = method_info.GetGenericArguments ();
+				for (int i = 0; i < generic_parameters.Length; i++)
+					method_definition.GenericParameters.Add (GenericParameterFor (generic_parameters [i], method_definition));
 
-			declaringType.Methods.Add (method_definition);
+				for (int i = 0; i < generic_parameters.Length; i++)
+					MapGenericParameterConstraints (generic_parameters [i], method_definition.GenericParameters [i], method_definition);
+			}
 
 			foreach (var parameter in method.GetParameters ())
 				MapParameter (method_definition, parameter);
@@ -513,13 +518,17 @@ namespace Mono.Reflection {
 				(Cecil.TypeAttributes) type.Attributes,
 				_assembly_definition.MainModule.TypeSystem.Object);
 
-			foreach (var generic_parameter in MapGenericParameters (type.GetGenericArguments (), type_definition))
-				type_definition.GenericParameters.Add (generic_parameter);
-
 			if (declaringType == null)
 				_assembly_definition.MainModule.Types.Add (type_definition);
 			else
 				declaringType.NestedTypes.Add (type_definition);
+
+			var generic_parameters = type.GetGenericArguments ();
+			for (int i = 0; i < generic_parameters.Length; i++)
+				type_definition.GenericParameters.Add (GenericParameterFor (generic_parameters[i], type_definition));
+
+			for (int i = 0; i < generic_parameters.Length; i++)
+				MapGenericParameterConstraints (generic_parameters [i], type_definition.GenericParameters [i], type_definition);
 
 			type_definition.BaseType = type.BaseType != null
 				? CreateReference (type.BaseType, type_definition)
@@ -535,17 +544,19 @@ namespace Mono.Reflection {
 			return type_definition;
 		}
 
-		private IEnumerable<GenericParameter> MapGenericParameters (Type [] genericParameters, IGenericParameterProvider owner)
+		private static GenericParameter GenericParameterFor (Type genericParameter, IGenericParameterProvider owner)
 		{
-			foreach (var p in genericParameters) {
-				var generic_parameter = new GenericParameter (p.Name, owner) {
-					Attributes = (Cecil.GenericParameterAttributes) (int) p.GenericParameterAttributes
-				};
+			return new GenericParameter (genericParameter.Name, owner) {
+				Attributes = (Cecil.GenericParameterAttributes) (int) genericParameter.GenericParameterAttributes
+			};
+		}
 
-				foreach (var constraint in p.GetGenericParameterConstraints ())
-					generic_parameter.Constraints.Add (CreateReference (constraint));
-
-				yield return generic_parameter;
+		private void MapGenericParameterConstraints (Type genericParameter, GenericParameter gp, IGenericParameterProvider owner)
+		{
+			foreach (var constraint in genericParameter.GetGenericParameterConstraints ()) {
+				gp.Constraints.Add (owner.GenericParameterType == GenericParameterType.Type
+					? CreateReference(constraint, (TypeReference) owner)
+					: CreateReference(constraint, (MethodReference) owner));
 			}
 		}
 
