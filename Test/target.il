@@ -92,6 +92,12 @@
 		ret
 	}
 
+	.method public instance object LoadThis () cil managed
+	{
+		ldarg 0
+		ret
+	}
+
 	// optimized instance property
 
 	.field private bool opan
