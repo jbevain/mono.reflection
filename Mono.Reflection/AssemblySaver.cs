@@ -61,13 +61,21 @@ namespace Mono.Reflection {
 			foreach (var evt in type.GetEvents (AllDeclared))
 				MapEvent (evt, EventDefinitionFor (evt, type_definition));
 
-			foreach (var iface in type.GetInterfaces())
+			foreach (var iface in GetInterfaces (type))
 				type_definition.Interfaces.Add (CreateReference (iface, type_definition));
 
 			foreach (var nested_type in type.GetNestedTypes (BindingFlags.Public | BindingFlags.NonPublic))
 				MapType (nested_type, type_definition);
 
 			MapCustomAttributes (type, type_definition);
+		}
+
+		private IEnumerable<Type> GetInterfaces (Type type)
+		{
+			if (type.BaseType == null)
+				return type.GetInterfaces ();
+
+			return type.GetInterfaces ().Except (type.BaseType.GetInterfaces ());
 		}
 
 		private void MapMethod (TypeDefinition type_definition, MethodBase method)
