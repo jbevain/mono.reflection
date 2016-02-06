@@ -589,22 +589,22 @@ namespace Mono.Reflection {
 
 		private TypeReference CreateReference (Type type)
 		{
-			return MapReference (_module_definition.Import (type));
+			return MapReference (_module_definition.ImportReference (type));
 		}
 
 		private TypeReference CreateReference (Type type, TypeReference context)
 		{
-			return MapReference (_module_definition.Import (type, context));
+			return MapReference (_module_definition.ImportReference (type, context));
 		}
 
 		private TypeReference CreateReference (Type type, MethodReference context)
 		{
-			return MapReference (_module_definition.Import (type, context));
+			return MapReference (_module_definition.ImportReference (type, context));
 		}
 
 		private FieldReference CreateReference (FieldInfo field, MethodReference context)
 		{
-			var reference = _module_definition.Import (field, context);
+			var reference = _module_definition.ImportReference (field, context);
 			MapReference (reference.DeclaringType);
 			MapReference (reference.FieldType);
 			return reference;
