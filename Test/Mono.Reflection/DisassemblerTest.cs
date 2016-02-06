@@ -125,6 +125,20 @@ namespace Mono.Reflection {
 ", "Switch");
 		}
 
+		[Test]
+		public void ThisParameter ()
+		{
+			AssertMethod (@"
+	IL_0000: ldarg this
+	IL_0004: ret
+", "LoadThis");
+		}
+
+		public void Foo(string a, string b)
+		{
+
+		}
+
 		static void AssertMethod (string code, string method_name)
 		{
 			var method = GetMethod (method_name);

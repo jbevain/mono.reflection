@@ -75,6 +75,7 @@ namespace Mono.Reflection {
 						ILPattern.OpCode (OpCodes.Stloc_0),
 						ILPattern.OpCode (OpCodes.Br_S),
 						ILPattern.OpCode (OpCodes.Ldloc_0))),
+				ILPattern.Optional(ILPattern.OpCode(OpCodes.Br_S)),
 				ILPattern.OpCode (OpCodes.Ret));
 
 		static ILPattern SetterPattern =
