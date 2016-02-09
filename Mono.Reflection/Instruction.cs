@@ -70,7 +70,7 @@ namespace Mono.Reflection {
 
 				switch (opcode.OperandType) {
 				case OperandType.InlineSwitch:
-					size += (1 + ((int []) operand).Length) * 4;
+					size += (1 + ((Instruction []) operand).Length) * 4;
 					break;
 				case OperandType.InlineI8:
 				case OperandType.InlineR:
