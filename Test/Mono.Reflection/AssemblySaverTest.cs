@@ -221,4 +221,29 @@ namespace Mono.Reflection {
 		[DllImport ("foo.dll", EntryPoint = "Boom")]
 		public static extern void Boum ();
 	}
+
+	public class A<T> {
+	}
+
+	public class B<T, U> {
+	}
+
+	public class C {
+		public static A<U> G<T, U> (T x)
+		{
+			return null;
+		}
+
+		public static A<U> F<T, U> (T x)
+		{
+			return C.G<Func<T>, U> (() => x);
+		}
+	}
+
+	public class D {
+		public static A<U> F<T, S, U> (A<B<T, S>> x)
+		{
+			return C.F<A<B<T, S>>, U>(x);
+		}
+	}
 }
