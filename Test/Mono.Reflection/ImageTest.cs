@@ -39,13 +39,13 @@ namespace Mono.Reflection {
 		[Test]
 		public void Assembly ()
 		{
-			Assert.IsTrue (Image.IsAssembly ("Mono.Reflection.dll"));
+			Assert.IsTrue (Image.IsAssembly (typeof (Image).Assembly.Location));
 		}
 
 		[Test]
 		public void NotAssembly ()
 		{
-			Assert.IsFalse (Image.IsAssembly ("Mono.Reflection.pdb"));
+			Assert.IsFalse (Image.IsAssembly (Path.ChangeExtension (typeof (Image).Assembly.Location, ".pdb")));
 		}
 	}
 }

@@ -2,7 +2,7 @@
 <package xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <metadata xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <id>Mono.Reflection</id>
-    <version>1.1.0.0</version>
+    <version>2.0.0.0</version>
     <title>Mono.Reflection</title>
     <authors>Jb Evain</authors>
     <owners>Jb Evain</owners>
@@ -12,8 +12,15 @@
     <description>Complement for System.Reflection, including an IL disassembler.</description>
     <language>en-US</language>
     <tags>assembly assemblies module modules il cil msil bytecode reflection disassembler</tags>
+    <dependencies>
+      <group targetFramework=".NETFramework4.0" />
+      <group targetFramework=".NETStandard2.0" />
+    </dependencies>
   </metadata>
   <files>
-    <file src="bin\Release\*.dll" target="lib" />
+    <file src="bin\Release\net40\Mono.Reflection.dll" target="lib/net40" />
+    <file src="bin\Release\net40\Mono.Reflection.pdb" target="lib/net40" />
+    <file src="bin\Release\netstandard2.0\Mono.Reflection.dll" target="lib/netstandard2.0" />
+    <file src="bin\Release\netstandard2.0\Mono.Reflection.pdb" target="lib/netstandard2.0" />
   </files>
 </package>
